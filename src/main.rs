@@ -1,20 +1,20 @@
-#![allow(unused)]
+#![allow(non_upper_case_globals)]
 extern crate rand;
 extern crate term_size;
 use rand::Rng;
 use std::{
-    array,
     collections::HashMap,
-    io, str, thread,
+    io, thread,
     time::{self, Instant},
 };
+
+const max: i32 = 10000;
 
 fn main() {
     let mut random_vec = Vec::new();
 
-    let l = 1000;
+    let l = 100000;
 
-    let max = 1000;
     let do_graph = true;
     for _ in 0..l {
         random_vec.push(rand::thread_rng().gen_range(0..max + 1));
@@ -171,15 +171,13 @@ fn bubble_sort(a: Vec<i32>, do_graph: bool) -> Vec<i32> {
     return returned;
 }
 
-fn radix_sort(mut a: Vec<i32>, d: i32, do_graph: bool) -> Vec<i32> {
-    println!("after sort {}:", d + 1);
-    println!("{:?}", a);
+fn radix_sort(a: Vec<i32>, d: i32, do_graph: bool) -> Vec<i32> {
     if do_graph {
         graph(a.clone());
-        thread::sleep(time::Duration::from_millis(10));
+        thread::sleep(time::Duration::from_millis(500));
     }
 
-    let mut nums = a.clone();
+    let nums = a.clone();
     let mut bins: HashMap<i32, Vec<i32>> = HashMap::new();
     for digit in 0..=9 {
         bins.insert(digit, Vec::new());
@@ -230,7 +228,6 @@ fn merge_sort(arr: Vec<i32>, do_graph: bool) -> Vec<i32> {
                 max_length = *el;
             }
         }
-        let width = vec.len();
         print!("{}[2J", 27 as char); // Clear terminal
 
         for i in (0..=max_length / scale_factor).rev() {
@@ -278,13 +275,13 @@ fn merge(left: Vec<i32>, right: Vec<i32>) -> Vec<i32> {
 }
 
 fn get_max(a: Vec<i32>) -> i32 {
-    let mut max: i32 = a[0];
+    let mut max_in_vec: i32 = a[0];
     for i in a {
-        if i > max {
-            max = i;
+        if i > max_in_vec {
+            max_in_vec = i;
         }
     }
-    return max;
+    return max_in_vec;
 }
 
 fn get_digits(n: i32) -> i32 {
@@ -303,7 +300,7 @@ fn get_digit(n: i32, d: i32) -> i32 {
 
 fn graph(v: Vec<i32>) {
     let mut max_length: i32 = 0;
-    let scale_factor: i32 = 100;
+    let scale_factor: i32 = max / 50;
     let vec = v.clone();
     for el in &v {
         if *el > max_length {
@@ -320,6 +317,7 @@ fn graph(v: Vec<i32>) {
     };
 
     print!("{}[2J", 27 as char); // Clear terminal
+    thread::sleep(time::Duration::from_millis(1));
 
     let chars_per_x_axis = width / 2; // Divide width by 2 to account for 2 characters per data point (e.g., "# ")
     let num_points = vec.len();
@@ -331,7 +329,7 @@ fn graph(v: Vec<i32>) {
                 (j as f32 / points_per_x_axis as f32 * (num_points - 1) as f32).round() as usize;
             let num = vec[index];
             if num >= i * scale_factor {
-                print!("# ");
+                print!("@ ");
             } else {
                 print!("  ");
             }
