@@ -1,5 +1,6 @@
 #![allow(unused)]
 extern crate rand;
+extern crate term_size;
 use rand::Rng;
 use std::{
     array,
@@ -11,9 +12,9 @@ use std::{
 fn main() {
     let mut random_vec = Vec::new();
 
-    let l = 120;
+    let l = 1000;
 
-    let max = 100;
+    let max = 1000;
     let do_graph = true;
     for _ in 0..l {
         random_vec.push(rand::thread_rng().gen_range(0..max + 1));
@@ -36,6 +37,8 @@ fn main() {
             "radix" => println!("{:?}", radix_sort(random_vec, 0, true)),
             "comb" => println!("{:?}", comb_sort(random_vec, true)),
             "merge" => print!("{:?}", merge_sort(random_vec, true)),
+            "quick" => print!("{:?}", quick_sort(random_vec, true)),
+            "shell" => print!("{:?}", shell_sort(random_vec, true)),
             _ => {}
         }
     }
@@ -45,7 +48,9 @@ fn main() {
         "bubble" => println!("{:?}", bubble_sort(real_sort_test_vec, false)),
         "radix" => println!("{:?}", radix_sort(real_sort_test_vec, 0, false)),
         "comb" => println!("{:?}", comb_sort(real_sort_test_vec, false)),
-        "merge" => print!("{:?}", merge_sort(real_sort_test_vec, true)),
+        "merge" => println!("{:?}", merge_sort(real_sort_test_vec, false)),
+        "quick" => println!("{:?}", quick_sort(real_sort_test_vec, false)),
+        "shell" => println!("{:?}", shell_sort(real_sort_test_vec, false)),
         _ => {}
     }
 
@@ -57,6 +62,64 @@ fn main() {
         elapsed.as_secs_f64() * 1000.0 + f64::from(elapsed.subsec_nanos()) / 1_000_000.0, // as milliseconds
         elapsed.as_secs_f64() + f64::from(elapsed.subsec_nanos()) / 1_000_000_000.0 // as seconds
     );
+}
+
+fn shell_sort(mut arr: Vec<i32>, do_graph: bool) -> Vec<i32> {
+    let n = arr.len();
+    let mut gap = n / 2;
+
+    while gap > 0 {
+        for i in gap..n {
+            let temp = arr[i];
+            let mut j = i;
+
+            while j >= gap && arr[j - gap] > temp {
+                arr[j] = arr[j - gap];
+                j -= gap;
+
+                if do_graph {
+                    graph(arr.clone());
+                    thread::sleep(time::Duration::from_millis(10));
+                }
+            }
+
+            arr[j] = temp;
+        }
+
+        gap /= 2;
+    }
+
+    arr
+}
+
+fn quick_sort(arr: Vec<i32>, do_graph: bool) -> Vec<i32> {
+    if arr.len() <= 1 {
+        return arr;
+    }
+    let pivot = arr[arr.len() - 1];
+    let mut smaller: Vec<i32> = Vec::new();
+    let mut larger: Vec<i32> = Vec::new();
+    let mut equal: Vec<i32> = Vec::new();
+
+    for element in arr {
+        if element < pivot {
+            smaller.push(element);
+        } else if element > pivot {
+            larger.push(element);
+        } else {
+            equal.push(element);
+        }
+    }
+
+    let mut returned: Vec<i32> = Vec::new();
+    returned.extend(quick_sort(smaller, do_graph));
+    returned.extend(equal);
+    returned.extend(quick_sort(larger, do_graph));
+    if do_graph {
+        graph(returned.clone());
+        thread::sleep(time::Duration::from_millis(10));
+    }
+    returned
 }
 
 fn comb_sort(mut a: Vec<i32>, do_graph: bool) -> Vec<i32> {
@@ -240,19 +303,34 @@ fn get_digit(n: i32, d: i32) -> i32 {
 
 fn graph(v: Vec<i32>) {
     let mut max_length: i32 = 0;
-    let scale_factor: i32 = 10;
+    let scale_factor: i32 = 100;
     let vec = v.clone();
     for el in &v {
         if *el > max_length {
             max_length = *el;
         }
     }
-    let width = vec.len();
+
+    let width = match term_size::dimensions() {
+        Some((w, _)) => w,
+        None => {
+            println!("Failed to get terminal width. Using default width.");
+            80 // Default width if terminal size is not available
+        }
+    };
+
     print!("{}[2J", 27 as char); // Clear terminal
 
+    let chars_per_x_axis = width / 2; // Divide width by 2 to account for 2 characters per data point (e.g., "# ")
+    let num_points = vec.len();
+    let points_per_x_axis = num_points.min(chars_per_x_axis);
+
     for i in (0..=max_length / scale_factor).rev() {
-        for num in &vec {
-            if *num >= i * scale_factor {
+        for j in 0..points_per_x_axis {
+            let index =
+                (j as f32 / points_per_x_axis as f32 * (num_points - 1) as f32).round() as usize;
+            let num = vec[index];
+            if num >= i * scale_factor {
                 print!("# ");
             } else {
                 print!("  ");
