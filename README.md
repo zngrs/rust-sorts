@@ -1,5 +1,5 @@
 
-    >cargo run
+    >cargo r
     >bubble
     
 
