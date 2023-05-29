@@ -8,12 +8,12 @@ use std::{
     time::{self, Instant},
 };
 
-const max: i32 = 10000;
+const max: i32 = 100;
 
 fn main() {
     let mut random_vec = Vec::new();
 
-    let l = 100000;
+    let l = 300;
 
     let do_graph = true;
     for _ in 0..l {
@@ -39,6 +39,7 @@ fn main() {
             "merge" => print!("{:?}", merge_sort(random_vec, true)),
             "quick" => print!("{:?}", quick_sort(random_vec, true)),
             "shell" => print!("{:?}", shell_sort(random_vec, true)),
+            "insertion" => print!("{:?}", insertion_sort(random_vec, true)),
             _ => {}
         }
     }
@@ -51,17 +52,35 @@ fn main() {
         "merge" => println!("{:?}", merge_sort(real_sort_test_vec, false)),
         "quick" => println!("{:?}", quick_sort(real_sort_test_vec, false)),
         "shell" => println!("{:?}", shell_sort(real_sort_test_vec, false)),
+        "insertion" => println!("{:?}", shell_sort(real_sort_test_vec, false)),
         _ => {}
     }
 
     let elapsed = now.elapsed();
 
     println!(
-        "Time taken to complete {} sort: {:.2} ms, or {:.2} seconds",
+        "Time taken to complete {} sort of {l} numbers: {:.2} ms, or {:.2} seconds",
         sort_method.trim(),
         elapsed.as_secs_f64() * 1000.0 + f64::from(elapsed.subsec_nanos()) / 1_000_000.0, // as milliseconds
         elapsed.as_secs_f64() + f64::from(elapsed.subsec_nanos()) / 1_000_000_000.0 // as seconds
     );
+}
+
+fn insertion_sort(arr: Vec<i32>, do_graph: bool) -> Vec<i32> {
+    let mut arr = arr.clone();
+    for i in 1..arr.len() - 1 {
+        let key = arr[i];
+        let mut j = i - 1;
+
+        while j >= 0 && arr[j] > key {
+            if do_graph {
+                thread::sleep(time::Duration::from_millis(10));
+            }
+            arr.swap(j + 1, j);
+            j = j - 1;
+        }
+    }
+    return arr;
 }
 
 fn shell_sort(mut arr: Vec<i32>, do_graph: bool) -> Vec<i32> {
@@ -308,7 +327,7 @@ fn graph(v: Vec<i32>) {
         }
     }
 
-    let width = match term_size::dimensions() {
+    let mut width = match term_size::dimensions() {
         Some((w, _)) => w,
         None => {
             println!("Failed to get terminal width. Using default width.");
@@ -317,9 +336,8 @@ fn graph(v: Vec<i32>) {
     };
 
     print!("{}[2J", 27 as char); // Clear terminal
-    thread::sleep(time::Duration::from_millis(1));
 
-    let chars_per_x_axis = width / 2; // Divide width by 2 to account for 2 characters per data point (e.g., "# ")
+    let chars_per_x_axis = width; // Divide width by 2 to account for 2 characters per data point (e.g., "# ")
     let num_points = vec.len();
     let points_per_x_axis = num_points.min(chars_per_x_axis);
 
@@ -329,11 +347,13 @@ fn graph(v: Vec<i32>) {
                 (j as f32 / points_per_x_axis as f32 * (num_points - 1) as f32).round() as usize;
             let num = vec[index];
             if num >= i * scale_factor {
-                print!("@ ");
+                print!("|");
             } else {
-                print!("  ");
+                print!(" ");
             }
         }
         println!();
     }
+
+    thread::sleep(time::Duration::from_millis(10));
 }
